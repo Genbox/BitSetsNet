@@ -1,14 +1,9 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections;
+using System.IO;
+using Xunit;
 
 namespace BitsetsNET.Tests
 {
-    [TestClass()]
     public class RLEBitsetTests : BaseBitSetTests
     {
         protected override IBitset CreateSetFromIndices(int[] indices, int length)
@@ -16,34 +11,34 @@ namespace BitsetsNET.Tests
             return RLEBitset.CreateFrom(indices, length);
         }
 
-        [TestMethod()]
+        [Fact]
         public virtual void SerializationTest()
         {
             int[] indicies = SetGenerator.GetRandomArray(TEST_SET_LENGTH);
 
             RLEBitset actual = (RLEBitset)CreateSetFromIndices(indicies, TEST_SET_LENGTH);
-            RLEBitset expected = null;
+            RLEBitset expected;
 
-            using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
+            using (MemoryStream ms = new MemoryStream())
             {
                 actual.Serialize(ms);
                 ms.Position = 0;
                 expected = RLEBitset.Deserialize(ms);
             }
 
-            Assert.AreEqual(actual, expected);
+            Assert.Equal(actual, expected);
         }
 
-        [TestMethod]
+        [Fact]
         public virtual void SetMethodDoesntMutateLength()
         {
             RLEBitset testSet = (RLEBitset)RLEBitset.CreateFrom(new int[] { }, TEST_SET_LENGTH);
             testSet.Set(0, true);
             testSet.Set(1, false);
-            Assert.AreEqual<int>(TEST_SET_LENGTH, testSet.Length());
+            Assert.Equal(TEST_SET_LENGTH, testSet.Length());
         }
 
-        [TestMethod()]
+        [Fact]
         public virtual void ToBitArrayTest()
         {
             int TEST_SET_LENGTH = 10;
@@ -67,14 +62,9 @@ namespace BitsetsNET.Tests
                 {
                     actual &= setArray[i] == testArray[i];
                 }
-                else
-                {
-                    //do nothing
-                }
             }
 
-            Assert.AreEqual(expected, actual);
+            Assert.Equal(expected, actual);
         }
-
     }
 }

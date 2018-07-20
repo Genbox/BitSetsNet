@@ -1,35 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BitsetsNET.Tests
 {
-    public class SetGenerator
+    public static class SetGenerator
     {
-
-        private static Random numberGenerator = new Random();
-        private SetGenerator()
-        {
-            //can't instantiate this
-        }
+        private static readonly Random _numberGenerator = new Random();
 
         public static int[] GetRandomArray(int length, int maxNumberOfOnes = 0)
         {
-
             if (maxNumberOfOnes == 0)
             {
                 maxNumberOfOnes = length;
             }
 
-            var indexSet = new HashSet<int>();
-           
-            int numberOfOnes = Math.Max(numberGenerator.Next(maxNumberOfOnes), 1);
+            HashSet<int> indexSet = new HashSet<int>();
 
-            for (int i = 0; i<numberOfOnes; i++)
+            int numberOfOnes = Math.Max(_numberGenerator.Next(maxNumberOfOnes), 1);
+
+            for (int i = 0; i < numberOfOnes; i++)
             {
-                indexSet.Add(numberGenerator.Next(length));
+                indexSet.Add(_numberGenerator.Next(length));
             }
 
             return indexSet.ToArray();
@@ -74,7 +66,7 @@ namespace BitsetsNET.Tests
             int skipped = 0;
             for (int i = start; i < end; i++)
             {
-                if(exceptions.Contains(i))
+                if (exceptions.Contains(i))
                 {
                     skipped++;
                 }
