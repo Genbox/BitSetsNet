@@ -1,16 +1,15 @@
 ﻿using System;
-using System.IO;
-using System.Text;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Text;
 
 namespace BitsetsNET
 {
     public class RLEBitset : IBitset
     {
-
         #region "Struct"
 
         public struct Run
@@ -28,7 +27,6 @@ namespace BitsetsNET
             {
                 return 2 + 2 * 2 * numberOfRuns;
             }
-
         }
 
         #endregion
@@ -54,7 +52,7 @@ namespace BitsetsNET
             Run currRun = new Run();
             for (int i = 0; i < bits.Count; i++)
             {
-                if (bits.Get(i) == true)
+                if (bits.Get(i))
                 {
                     currRun.StartIndex = i;
                     currRun.EndIndex = i;
@@ -69,12 +67,13 @@ namespace BitsetsNET
                             break;
                         }
                     }
+
                     i = currRun.EndIndex; //move the counter to the end of the run we just found
                     rtnVal.runArray.Add(currRun);
                     currRun = new Run();
                 }
-
             }
+
             return rtnVal;
         }
 
@@ -91,7 +90,8 @@ namespace BitsetsNET
             {
                 capacity = indices.Max() + 1;
             }
-            return RLEBitset.CreateFrom(indices, capacity);
+
+            return CreateFrom(indices, capacity);
         }
 
         /// <summary>
@@ -109,7 +109,6 @@ namespace BitsetsNET
 
             if (indices.Length > 0)
             {
-
                 Array.Sort(indices); // sort the input array first.
                 if (indices.Last() > capacity) // capacity must be larger than highest index value in input array.
                 {
@@ -128,9 +127,9 @@ namespace BitsetsNET
                         currRun.StartIndex = indices[i + 1];
                     }
                 }
+
                 currRun.EndIndex = indices.LastOrDefault();
                 rtnVal.runArray.Add(currRun);
-
             }
 
             return rtnVal;
@@ -144,9 +143,9 @@ namespace BitsetsNET
         {
             RLEBitset otherRLESet = (RLEBitset)otherSet; // cast to an RLEBitset - errors if cannot cast
             RLEBitset rtnVal = new RLEBitset(); // instantiate the return value
-            rtnVal.length = this.length;
+            rtnVal.length = length;
 
-            List<Run> runsA = this.runArray;
+            List<Run> runsA = runArray;
             List<Run> runsB = otherRLESet.runArray;
 
             int i = 0;
@@ -175,7 +174,6 @@ namespace BitsetsNET
                     i++;
                     j++;
                 }
-
             }
 
             return rtnVal;
@@ -191,9 +189,9 @@ namespace BitsetsNET
         {
             RLEBitset otherRLESet = (RLEBitset)otherSet; // cast to an RLEBitset
 
-            List<Run> runsA = this.runArray;
+            List<Run> runsA = runArray;
             List<Run> runsB = otherRLESet.runArray;
-            
+
             int i = 0;
             int j = 0;
 
@@ -217,7 +215,7 @@ namespace BitsetsNET
                         Run ithRun = runsA[i];
                         ithRun.StartIndex = w;
                         runsA[i] = ithRun;
-                        var what = this.runArray[i];
+                        Run what = runArray[i];
                         if (y <= z)
                         {
                             i++;
@@ -225,11 +223,11 @@ namespace BitsetsNET
                         else // (y > z )
                         {
                             // splits the run from runsA into two runs
-                            Run newRun =  new Run(z + 1, y);
+                            Run newRun = new Run(z + 1, y);
                             Run newRun2 = runsA[i];
                             newRun2.EndIndex = z;
                             runsA[i] = newRun2;
-                            runsA.Insert(i + 1, newRun); 
+                            runsA.Insert(i + 1, newRun);
                             i++;
                             j++;
                         }
@@ -250,31 +248,32 @@ namespace BitsetsNET
                             Run newRun2 = runsA[i];
                             newRun2.EndIndex = z;
                             runsA[i] = newRun2;
-                            runsA.Insert(i + 1, newRun); 
+                            runsA.Insert(i + 1, newRun);
                             i++;
                             j++;
                         }
-                        else 
+                        else
                         {
                             j++;
                         }
                     }
                 }
             }
+
             //this truncates runsA if we've considered all of the runs in runsB
-            this.runArray = this.runArray.Take(i).ToList();
+            runArray = runArray.Take(i).ToList();
         }
-             
+
         /// <summary>
         /// Returns a deep copy of this RLEBitset.
         /// </summary>
         public IBitset Clone()
         {
             RLEBitset rtnVal = new RLEBitset();
-            Run[] tempRuns = new Run[this.runArray.Count];
-            this.runArray.CopyTo(tempRuns);
+            Run[] tempRuns = new Run[runArray.Count];
+            runArray.CopyTo(tempRuns);
             rtnVal.runArray = tempRuns.ToList();
-            rtnVal.length = this.length;
+            rtnVal.length = length;
             return rtnVal;
         }
 
@@ -286,7 +285,7 @@ namespace BitsetsNET
         public bool Get(int index)
         {
             bool rtnVal = false;
-            foreach (Run r in this.runArray)
+            foreach (Run r in runArray)
             {
                 if (index >= r.StartIndex && index <= r.EndIndex)
                 {
@@ -294,6 +293,7 @@ namespace BitsetsNET
                     break;
                 }
             }
+
             return rtnVal;
         }
 
@@ -313,8 +313,9 @@ namespace BitsetsNET
             int rtnVal = 0;
             foreach (Run r in runArray)
             {
-                rtnVal = rtnVal + (r.EndIndex - r.StartIndex + 1);
+                rtnVal = rtnVal + (r.EndIndex - r.StartIndex) + 1;
             }
+
             return rtnVal;
         }
 
@@ -323,9 +324,9 @@ namespace BitsetsNET
             RLEBitset otherRLESet = (RLEBitset)otherSet; // cast to an RLEBitset - errors if cannot cast
 
             RLEBitset rtnVal = new RLEBitset(); // instantiate the return value
-            rtnVal.length = (this.length > otherRLESet.length) ? this.length : otherRLESet.length;
+            rtnVal.length = length > otherRLESet.length ? length : otherRLESet.length;
 
-            List<Run> runsA = this.runArray;
+            List<Run> runsA = runArray;
             List<Run> runsB = otherRLESet.runArray;
 
             int i = 0;
@@ -354,7 +355,6 @@ namespace BitsetsNET
                         i++;
                         j++;
                     }
-                    
                 }
                 else
                 {
@@ -370,7 +370,6 @@ namespace BitsetsNET
                         j++;
                     }
                 }
-
             }
 
             //account for remaining runs in one of our sets.
@@ -395,7 +394,6 @@ namespace BitsetsNET
             }
 
             return rtnVal;
-
         }
 
         /// <summary>
@@ -429,63 +427,58 @@ namespace BitsetsNET
             Run current = new Run();
             int nextThisIndex, nextOtherIndex;
 
-            if(this.length < otherRLESet.length)
+            if (length < otherRLESet.length)
             {
-                this.length = otherRLESet.length;
+                length = otherRLESet.length;
             }
 
-            if (this.runArray.Count == 0)
+            if (runArray.Count == 0)
             {
-                this.runArray = new List<Run>(otherRLESet.runArray);
-                nextThisIndex = this.runArray.Count; //this stops the loops 
-                nextOtherIndex = this.runArray.Count; 
-                
+                runArray = new List<Run>(otherRLESet.runArray);
+                nextThisIndex = runArray.Count; //this stops the loops 
+                nextOtherIndex = runArray.Count;
             }
             else if (otherRLESet.runArray.Count == 0)
             {
-                nextThisIndex = this.runArray.Count; //this stops the loops
-                nextOtherIndex = this.runArray.Count; 
+                nextThisIndex = runArray.Count; //this stops the loops
+                nextOtherIndex = runArray.Count;
             }
-            else if (this.runArray[0].StartIndex <= otherRLESet.runArray[0].StartIndex)
+            else if (runArray[0].StartIndex <= otherRLESet.runArray[0].StartIndex)
             {
-                current = this.runArray[0];
+                current = runArray[0];
                 nextThisIndex = 1;
                 nextOtherIndex = 0;
             }
-            else if (TryCreateUnion(this.runArray[0], otherRLESet.runArray[0], ref current))
+            else if (TryCreateUnion(runArray[0], otherRLESet.runArray[0], ref current))
             {
                 //first two sets overlap
-                this.runArray[0] = current;
+                runArray[0] = current;
                 nextThisIndex = 1;
                 nextOtherIndex = 1;
             }
             else
             {
-                this.runArray.Insert(0, otherRLESet.runArray[0]);
+                runArray.Insert(0, otherRLESet.runArray[0]);
                 nextThisIndex = 1;
                 nextOtherIndex = 1;
             }
 
-            while ((nextThisIndex < this.runArray.Count) && (nextOtherIndex < otherRLESet.runArray.Count))
+            while (nextThisIndex < runArray.Count && nextOtherIndex < otherRLESet.runArray.Count)
             {
-                if (this.runArray[nextThisIndex].StartIndex >
-                    otherRLESet.runArray[nextOtherIndex].StartIndex)
+                if (runArray[nextThisIndex].StartIndex > otherRLESet.runArray[nextOtherIndex].StartIndex)
                 {
                     MergeOtherRun(otherRLESet, ref current, ref nextThisIndex, ref nextOtherIndex);
                 }
                 else
-                {    
-                    mergeExistingRun(ref current, ref nextThisIndex);   
+                {
+                    mergeExistingRun(ref current, ref nextThisIndex);
                 }
-
             }
 
-
-
-            if (nextThisIndex < this.runArray.Count)
+            if (nextThisIndex < runArray.Count)
             {
                 //we finished the other, finish this one
-                while (nextThisIndex < this.runArray.Count)
+                while (nextThisIndex < runArray.Count)
                 {
                     mergeExistingRun(ref current, ref nextThisIndex);
                 }
@@ -495,7 +488,7 @@ namespace BitsetsNET
                 //we finished this one, finish the other
                 while (nextOtherIndex < otherRLESet.runArray.Count)
                 {
-                    int lastNextIndex = this.runArray.Count;
+                    int lastNextIndex = runArray.Count;
                     MergeOtherRun(otherRLESet, ref current, ref lastNextIndex, ref nextOtherIndex);
                 }
             }
@@ -514,7 +507,7 @@ namespace BitsetsNET
 
         private void mergeExistingRun(ref Run current, ref int nextIndex)
         {
-            Run next = this.runArray[nextIndex];
+            Run next = runArray[nextIndex];
             if (Merge(ref current, ref next, false, nextIndex - 1))
             {
                 //next has been merged, remove it
@@ -532,7 +525,7 @@ namespace BitsetsNET
             if (TryCreateUnion(current, next, ref current))
             {
                 //union made. Replace the current in place
-                this.runArray[index] = current;
+                runArray[index] = current;
                 mergedOverlappingIntervalIndicator = true;
             }
             else
@@ -540,7 +533,7 @@ namespace BitsetsNET
                 current = next;
                 if (shouldInsert)
                 {
-                    this.runArray.Insert(index + 1, next);   
+                    runArray.Insert(index + 1, next);
                 }
             }
 
@@ -577,7 +570,7 @@ namespace BitsetsNET
         public void Set(int index, bool value)
         {
             int[] tmpIndices = { index };
-            IBitset other = RLEBitset.CreateFrom(tmpIndices, this.length);
+            IBitset other = CreateFrom(tmpIndices, length);
             if (value)
             {
                 OrWith(other);
@@ -586,7 +579,6 @@ namespace BitsetsNET
             {
                 DifferenceWith(other);
             }
-
         }
 
         /// <summary>
@@ -641,13 +633,13 @@ namespace BitsetsNET
             }
             else
             {
-                if (this.Get(index) == true)
+                if (Get(index))
                 {
-                    this.Set(index, false);
+                    Set(index, false);
                 }
                 else
                 {
-                    this.Set(index, true);
+                    Set(index, true);
                 }
             }
         }
@@ -670,25 +662,25 @@ namespace BitsetsNET
             }
             else
             {
-                List<Run> rangeToFlip = this.GetRange(start, end);
+                List<Run> rangeToFlip = GetRange(start, end);
 
-                this.Set(rangeToFlip[0].StartIndex, rangeToFlip[0].EndIndex, false);
+                Set(rangeToFlip[0].StartIndex, rangeToFlip[0].EndIndex, false);
 
                 int rangeCount = rangeToFlip.Count;
                 for (int i = 1; i < rangeCount; i++)
                 {
-                    this.Set(rangeToFlip[i].StartIndex, rangeToFlip[i].EndIndex, false);
-                    this.Set(rangeToFlip[i - 1].EndIndex + 1, rangeToFlip[i].StartIndex - 1, true);
+                    Set(rangeToFlip[i].StartIndex, rangeToFlip[i].EndIndex, false);
+                    Set(rangeToFlip[i - 1].EndIndex + 1, rangeToFlip[i].StartIndex - 1, true);
                 }
 
                 if (start < rangeToFlip[0].StartIndex)
                 {
-                    this.Set(start, rangeToFlip[0].StartIndex - 1, true);
+                    Set(start, rangeToFlip[0].StartIndex - 1, true);
                 }
 
                 if (end > rangeToFlip[rangeCount - 1].EndIndex)
                 {
-                    this.Set(rangeToFlip[rangeCount - 1].EndIndex + 1, end, true);
+                    Set(rangeToFlip[rangeCount - 1].EndIndex + 1, end, true);
                 }
             }
         }
@@ -701,7 +693,7 @@ namespace BitsetsNET
         public IBitset Not()
         {
             RLEBitset rtnVal = new RLEBitset();
-            rtnVal.length = this.length;
+            rtnVal.length = length;
             if (runArray.Count > 0)
             {
                 Run currRun = new Run();
@@ -731,9 +723,8 @@ namespace BitsetsNET
                     currRun.EndIndex = length - 1;
                     rtnVal.runArray.Add(currRun);
                 }
-
             }
-            else 
+            else
             {
                 rtnVal.runArray.Add(new Run(0, length - 1));
             }
@@ -749,23 +740,20 @@ namespace BitsetsNET
         public override bool Equals(object otherSet)
         {
             bool rtnVal = false;
-            if ((otherSet is RLEBitset))
+            if (otherSet is RLEBitset)
             {
                 RLEBitset otherRLESet = (RLEBitset)otherSet; // cast to an RLEBitset - errors if cannot cast
 
-                if (this.length == otherRLESet.length &&
-                this.runArray.Count == otherRLESet.runArray.Count)
+                if (length == otherRLESet.length && runArray.Count == otherRLESet.runArray.Count)
                 {
-
-                    if (this.runArray.Count == 0)
+                    if (runArray.Count == 0)
                     {
                         rtnVal = true;
                     }
 
-                    for (int i = 0; i < this.runArray.Count; i++)
+                    for (int i = 0; i < runArray.Count; i++)
                     {
-                        if (this.runArray[i].StartIndex == otherRLESet.runArray[i].StartIndex &&
-                            this.runArray[i].EndIndex == otherRLESet.runArray[i].EndIndex)
+                        if (runArray[i].StartIndex == otherRLESet.runArray[i].StartIndex && runArray[i].EndIndex == otherRLESet.runArray[i].EndIndex)
                         {
                             rtnVal = true;
                         }
@@ -776,12 +764,10 @@ namespace BitsetsNET
                         }
                     }
                 }
-
             }
-            
+
             return rtnVal;
         }
-
 
         /// <summary>
         /// Returns the contents of this set as a bit array where the value is
@@ -791,14 +777,14 @@ namespace BitsetsNET
         public BitArray ToBitArray()
         {
             int arrayLength = 0;
-            if (this.runArray.Count > 0)
+            if (runArray.Count > 0)
             {
-                arrayLength = this.runArray.Last().EndIndex + 1;
+                arrayLength = runArray.Last().EndIndex + 1;
             }
 
             BitArray rtnVal = new BitArray(arrayLength, false);
 
-            foreach (Run r in this.runArray)
+            foreach (Run r in runArray)
             {
                 for (int i = r.StartIndex; i < r.EndIndex + 1; i++)
                 {
@@ -809,10 +795,7 @@ namespace BitsetsNET
             return rtnVal;
         }
 
-        public void GetObjectData(SerializationInfo info, StreamingContext context)
-        {
-            
-        }
+        public void GetObjectData(SerializationInfo info, StreamingContext context) { }
 
         /// <summary>
         /// Write a binary serialization of this RLE bitset.
@@ -823,8 +806,8 @@ namespace BitsetsNET
             //We don't care about the encoding, but we have to specify something to be able to set the stream as leave open.
             using (BinaryWriter writer = new BinaryWriter(stream, Encoding.Default, true))
             {
-                writer.Write(this.length);
-                foreach (Run r in this.runArray)
+                writer.Write(length);
+                foreach (Run r in runArray)
                 {
                     writer.Write(r.StartIndex);
                     writer.Write(r.EndIndex);
@@ -853,9 +836,10 @@ namespace BitsetsNET
                     bitset.runArray.Add(currRun);
                 }
             }
+
             return bitset;
         }
-        
+
         /// <summary>
         /// Get an enumerator of the set indices of this bitset. 
         /// Meaning, it returns the indicies where the value is set to "true" or "1".
@@ -863,28 +847,30 @@ namespace BitsetsNET
         /// <returns>A enumerator giving the set (i.e. for which the bit is '1' or true) indices for this bitset.</returns>
         public IEnumerator GetEnumerator()
         {
-            foreach (Run r in this.runArray)
+            foreach (Run r in runArray)
             {
-                for (int i = r.StartIndex; i < r.EndIndex +1; i++)
+                for (int i = r.StartIndex; i < r.EndIndex + 1; i++)
                 {
                     yield return i;
                 }
             }
         }
-        
+
         public override int GetHashCode()
         {
             unchecked
             {
                 int hash = length;
-                foreach (var run in runArray)
+                foreach (Run run in runArray)
                 {
                     hash = unchecked(17 * hash + run.StartIndex);
                     hash = unchecked(17 * hash + run.EndIndex);
                 }
+
                 return hash;
             }
         }
+
         #endregion
 
         #region "Private Methods"
@@ -894,20 +880,20 @@ namespace BitsetsNET
             List<Run> range = new List<Run>();
             for (int i = 0; i < runArray.Count; i++)
             {
-                if(runArray[i].StartIndex >= start && runArray[i].EndIndex <= end)
+                if (runArray[i].StartIndex >= start && runArray[i].EndIndex <= end)
                 {
                     range.Add(runArray[i]);
                 }
-                else if(runArray[i].StartIndex < start && runArray[i].EndIndex <= end)
+                else if (runArray[i].StartIndex < start && runArray[i].EndIndex <= end)
                 {
                     range.Add(new Run(start, runArray[i].EndIndex));
                 }
-                else if(runArray[i].StartIndex < start && runArray[i].EndIndex > end)
+                else if (runArray[i].StartIndex < start && runArray[i].EndIndex > end)
                 {
                     range.Add(new Run(start, end));
                     break;
                 }
-                else if(runArray[i].StartIndex >= start && runArray[i].EndIndex > end)
+                else if (runArray[i].StartIndex >= start && runArray[i].EndIndex > end)
                 {
                     range.Add(new Run(runArray[i].StartIndex, end));
                     break;
@@ -917,12 +903,10 @@ namespace BitsetsNET
             return range;
         }
 
-
         private bool TryCreateIntersection(Run runA, Run runB, ref Run output)
         {
-
-            int startIdx = (runA.StartIndex >= runB.StartIndex ? runA.StartIndex : runB.StartIndex); // take the higher START index
-            int endIdx = (runA.EndIndex <= runB.EndIndex ? runA.EndIndex : runB.EndIndex);           // take the lower END index
+            int startIdx = runA.StartIndex >= runB.StartIndex ? runA.StartIndex : runB.StartIndex; // take the higher START index
+            int endIdx = runA.EndIndex <= runB.EndIndex ? runA.EndIndex : runB.EndIndex; // take the lower END index
 
             // determine if there is an intersection overlap and set return values accordingly
             bool rtnVal = false;
@@ -938,23 +922,21 @@ namespace BitsetsNET
 
         private bool TryCreateUnion(Run runA, Run runB, ref Run output)
         {
-
-            int startIdx = (runA.StartIndex >= runB.StartIndex ? runA.StartIndex : runB.StartIndex); // take the higher START index
-            int endIdx = (runA.EndIndex <= runB.EndIndex ? runA.EndIndex : runB.EndIndex);           // take the lower END index
+            int startIdx = runA.StartIndex >= runB.StartIndex ? runA.StartIndex : runB.StartIndex; // take the higher START index
+            int endIdx = runA.EndIndex <= runB.EndIndex ? runA.EndIndex : runB.EndIndex; // take the lower END index
 
             // if intersection exists, expand find the union
             bool rtnVal = false;
             if (endIdx >= startIdx - 1)
             {
                 rtnVal = true;
-                output.StartIndex = (runA.StartIndex >= runB.StartIndex ? runB.StartIndex : runA.StartIndex); // take the lower START index
-                output.EndIndex = (runA.EndIndex >= runB.EndIndex ? runA.EndIndex : runB.EndIndex);           // take the higher END index
+                output.StartIndex = runA.StartIndex >= runB.StartIndex ? runB.StartIndex : runA.StartIndex; // take the lower START index
+                output.EndIndex = runA.EndIndex >= runB.EndIndex ? runA.EndIndex : runB.EndIndex; // take the higher END index
             }
 
             return rtnVal;
         }
 
-        #endregion 
-
+        #endregion
     }
 }

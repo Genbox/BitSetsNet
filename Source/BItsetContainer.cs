@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BitsetsNET
 {
@@ -16,25 +13,25 @@ namespace BitsetsNET
 
         public BitsetContainer()
         {
-            this.Cardinality = 0;
-            this.Bitmap = new long[MAX_CAPACITY / 64];
+            Cardinality = 0;
+            Bitmap = new long[MAX_CAPACITY / 64];
         }
 
         public BitsetContainer(int cardinality, long[] bitmap)
         {
-            this.Cardinality = cardinality;
-            this.Bitmap = bitmap;
+            Cardinality = cardinality;
+            Bitmap = bitmap;
         }
-        
+
         /// <summary>
         /// Recomputes the cardinality of the bitmap.
         /// </summary>
         protected void ComputeCardinality()
         {
-            this.Cardinality = 0;
-            for (int k = 0; k < this.Bitmap.Length; k++)
+            Cardinality = 0;
+            for (int k = 0; k < Bitmap.Length; k++)
             {
-                this.Cardinality += Utility.LongBitCount(this.Bitmap[k]);
+                Cardinality += Utility.LongBitCount(Bitmap[k]);
             }
         }
 
@@ -52,6 +49,7 @@ namespace BitsetsNET
             {
                 ++Cardinality;
             }
+
             return this;
         }
 
@@ -71,11 +69,11 @@ namespace BitsetsNET
 
         public void LoadData(ArrayContainer arrayContainer)
         {
-            this.Cardinality = arrayContainer.Cardinality;
+            Cardinality = arrayContainer.Cardinality;
             for (int k = 0; k < arrayContainer.Cardinality; ++k)
             {
                 ushort x = arrayContainer.Content[k];
-                Bitmap[x / 64] |= (1L << x);
+                Bitmap[x / 64] |= 1L << x;
             }
         }
 
@@ -89,7 +87,6 @@ namespace BitsetsNET
             ac.LoadData(this);
             return ac;
         }
-
 
         /// <summary>
         /// Fill the array with set bits.
@@ -120,22 +117,25 @@ namespace BitsetsNET
         public override Container And(BitsetContainer x)
         {
             int newCardinality = 0;
-            for (int k = 0; k < this.Bitmap.Length; ++k)
+            for (int k = 0; k < Bitmap.Length; ++k)
             {
-                newCardinality += Utility.LongBitCount(this.Bitmap[k] & x.Bitmap[k]);
+                newCardinality += Utility.LongBitCount(Bitmap[k] & x.Bitmap[k]);
             }
+
             if (newCardinality > ArrayContainer.DEFAULT_MAX_SIZE)
             {
                 BitsetContainer answer = new BitsetContainer();
                 for (int k = 0; k < answer.Bitmap.Length; ++k)
                 {
-                    answer.Bitmap[k] = this.Bitmap[k] & x.Bitmap[k];
+                    answer.Bitmap[k] = Bitmap[k] & x.Bitmap[k];
                 }
+
                 answer.Cardinality = newCardinality;
                 return answer;
             }
+
             ArrayContainer ac = new ArrayContainer(newCardinality);
-            Utility.FillArrayAND(ref ac.Content, this.Bitmap, x.Bitmap);
+            Utility.FillArrayAND(ref ac.Content, Bitmap, x.Bitmap);
             ac.Cardinality = newCardinality;
             return ac;
         }
@@ -151,14 +151,15 @@ namespace BitsetsNET
         {
             ArrayContainer answer = new ArrayContainer(x.Content.Length);
             int c = x.Cardinality;
-            for (int i=0; i<c; i++)
+            for (int i = 0; i < c; i++)
             {
                 ushort v = x.Content[i];
-                if (this.Contains(v))
+                if (Contains(v))
                 {
                     answer.Content[answer.Cardinality++] = v;
                 }
             }
+
             return answer;
         }
 
@@ -175,17 +176,19 @@ namespace BitsetsNET
             long bef = Bitmap[index];
             long mask = 1L << x;
             if (Cardinality == ArrayContainer.DEFAULT_MAX_SIZE + 1)
-            {// this is
-             // the
-             // uncommon
-             // path
+            {
+                // this is
+                // the
+                // uncommon
+                // path
                 if ((bef & mask) != 0)
                 {
                     --Cardinality;
                     Bitmap[index] &= ~mask;
-                    return this.ToArrayContainer();
+                    return ToArrayContainer();
                 }
             }
+
             // TODO: check whether a branchy version could be faster
             Cardinality += 1 - 2 * (int)((bef & mask) >> x);
             Bitmap[index] ^= mask;
@@ -205,10 +208,12 @@ namespace BitsetsNET
             {
                 return this;
             }
+
             if (begin > end)
             {
                 throw new ArgumentException("Invalid range [" + begin + "," + end + ")");
             }
+
             Utility.SetBitmapRange(Bitmap, begin, end);
             ComputeCardinality();
             return this;
@@ -242,6 +247,7 @@ namespace BitsetsNET
             {
                 return ToArrayContainer();
             }
+
             return this;
         }
 
@@ -251,10 +257,10 @@ namespace BitsetsNET
         /// <returns>The cloned bitset container</returns>
         public override Container Clone()
         {
-            long[] newBitmap = new long[this.Bitmap.Length];
-            this.Bitmap.CopyTo(newBitmap, 0);
+            long[] newBitmap = new long[Bitmap.Length];
+            Bitmap.CopyTo(newBitmap, 0);
 
-            return new BitsetContainer(this.Cardinality, newBitmap);
+            return new BitsetContainer(Cardinality, newBitmap);
         }
 
         /// <summary>
@@ -298,22 +304,23 @@ namespace BitsetsNET
         /// <returns>A new container with the differences</returns>
         public override Container AndNot(ArrayContainer x)
         {
-            BitsetContainer answer = (BitsetContainer) Clone();
+            BitsetContainer answer = (BitsetContainer)Clone();
             int c = x.Cardinality;
             for (int k = 0; k < c; ++k)
             {
                 ushort v = x.Content[k];
-                uint i = (uint) (Utility.ToIntUnsigned(v) >> 6);
+                uint i = (uint)(Utility.ToIntUnsigned(v) >> 6);
                 long w = answer.Bitmap[i];
-                long aft = w & (~(1L << v));
+                long aft = w & ~(1L << v);
                 answer.Bitmap[i] = aft;
-                answer.Cardinality -= (int) ((w ^ aft) >> v);
+                answer.Cardinality -= (int)((w ^ aft) >> v);
             }
 
             if (answer.Cardinality <= ArrayContainer.DEFAULT_MAX_SIZE)
             {
                 return answer.ToArrayContainer();
             }
+
             return answer;
         }
 
@@ -326,9 +333,9 @@ namespace BitsetsNET
         public override Container AndNot(BitsetContainer x)
         {
             int newCardinality = 0;
-            for (int k = 0; k < this.Bitmap.Length; ++k)
+            for (int k = 0; k < Bitmap.Length; ++k)
             {
-                newCardinality += Utility.LongBitCount(this.Bitmap[k] & (~x.Bitmap[k]));
+                newCardinality += Utility.LongBitCount(Bitmap[k] & ~x.Bitmap[k]);
             }
 
             if (newCardinality > ArrayContainer.DEFAULT_MAX_SIZE)
@@ -336,13 +343,15 @@ namespace BitsetsNET
                 BitsetContainer answer = new BitsetContainer();
                 for (int k = 0; k < answer.Bitmap.Length; ++k)
                 {
-                    answer.Bitmap[k] = this.Bitmap[k] & (~x.Bitmap[k]);
+                    answer.Bitmap[k] = Bitmap[k] & ~x.Bitmap[k];
                 }
+
                 answer.Cardinality = newCardinality;
                 return answer;
             }
+
             ArrayContainer ac = new ArrayContainer(newCardinality);
-            Utility.FillArrayANDNOT(ac.Content, this.Bitmap, x.Bitmap);
+            Utility.FillArrayANDNOT(ac.Content, Bitmap, x.Bitmap);
             ac.Cardinality = newCardinality;
             return ac;
         }
@@ -357,12 +366,14 @@ namespace BitsetsNET
         {
             for (int k = 0; k < x.Cardinality; ++k)
             {
-                this.Remove(x.Content[k]);
+                Remove(x.Content[k]);
             }
+
             if (Cardinality <= ArrayContainer.DEFAULT_MAX_SIZE)
             {
-                return this.ToArrayContainer();
+                return ToArrayContainer();
             }
+
             return this;
         }
 
@@ -376,21 +387,24 @@ namespace BitsetsNET
         public override Container IAndNot(BitsetContainer x)
         {
             int newCardinality = 0;
-            for (int k = 0; k < this.Bitmap.Length; ++k)
+            for (int k = 0; k < Bitmap.Length; ++k)
             {
-                newCardinality += Utility.LongBitCount(this.Bitmap[k] & (~x.Bitmap[k]));
+                newCardinality += Utility.LongBitCount(Bitmap[k] & ~x.Bitmap[k]);
             }
+
             if (newCardinality > ArrayContainer.DEFAULT_MAX_SIZE)
             {
-                for (int k = 0; k < this.Bitmap.Length; ++k)
+                for (int k = 0; k < Bitmap.Length; ++k)
                 {
-                    this.Bitmap[k] = this.Bitmap[k] & (~x.Bitmap[k]);
+                    Bitmap[k] = Bitmap[k] & ~x.Bitmap[k];
                 }
-                this.Cardinality = newCardinality;
+
+                Cardinality = newCardinality;
                 return this;
             }
+
             ArrayContainer ac = new ArrayContainer(newCardinality);
-            Utility.FillArrayANDNOT(ac.Content, this.Bitmap, x.Bitmap);
+            Utility.FillArrayANDNOT(ac.Content, Bitmap, x.Bitmap);
             ac.Cardinality = newCardinality;
             return ac;
         }
@@ -408,15 +422,18 @@ namespace BitsetsNET
             {
                 newCardinality += Utility.LongBitCount(Bitmap[k] & other.Bitmap[k]);
             }
+
             if (newCardinality > ArrayContainer.DEFAULT_MAX_SIZE)
             {
                 for (int k = 0; k < Bitmap.Length; ++k)
                 {
                     Bitmap[k] = Bitmap[k] & other.Bitmap[k];
                 }
+
                 Cardinality = newCardinality;
                 return this;
             }
+
             ArrayContainer ac = new ArrayContainer(newCardinality);
             Utility.FillArrayAND(ref ac.Content, Bitmap, other.Bitmap);
             ac.Cardinality = newCardinality;
@@ -463,13 +480,14 @@ namespace BitsetsNET
         /// <returns>Aggregated container</returns>
         public override Container IOr(BitsetContainer x)
         {
-            this.Cardinality = 0;
-            for (int k = 0; k < this.Bitmap.Length; ++k)
+            Cardinality = 0;
+            for (int k = 0; k < Bitmap.Length; ++k)
             {
-                long w = this.Bitmap[k] | x.Bitmap[k];
-                this.Bitmap[k] = w;
-                this.Cardinality += Utility.LongBitCount(w);
+                long w = Bitmap[k] | x.Bitmap[k];
+                Bitmap[k] = w;
+                Cardinality += Utility.LongBitCount(w);
             }
+
             return this;
         }
 
@@ -488,12 +506,13 @@ namespace BitsetsNET
                 ushort v = x.Content[k];
                 int i = v >> 6;
 
-                long w = this.Bitmap[i];
+                long w = Bitmap[i];
                 long aft = w | (1L << v);
-                this.Bitmap[i] = aft;
+                Bitmap[i] = aft;
 
-                this.Cardinality += (int)((w - aft) >> 63);
+                Cardinality += (int)((w - aft) >> 63);
             }
+
             return this;
         }
 
@@ -507,11 +526,13 @@ namespace BitsetsNET
         {
             BitsetContainer answer = new BitsetContainer();
             answer.Cardinality = 0;
-            for (int k = 0; k < answer.Bitmap.Length; ++k) {
-                long w = this.Bitmap[k] | x.Bitmap[k];
+            for (int k = 0; k < answer.Bitmap.Length; ++k)
+            {
+                long w = Bitmap[k] | x.Bitmap[k];
                 answer.Bitmap[k] = w;
                 answer.Cardinality += Utility.LongBitCount(w);
             }
+
             return answer;
         }
 
@@ -523,10 +544,10 @@ namespace BitsetsNET
         /// <returns>Aggregated container</returns>
         public override Container Or(ArrayContainer x)
         {
-            BitsetContainer answer = (BitsetContainer) Clone();
+            BitsetContainer answer = (BitsetContainer)Clone();
 
             int c = x.Cardinality;
-            for (int k = 0; k < c ; ++k)
+            for (int k = 0; k < c; ++k)
             {
                 ushort v = x.Content[k];
                 int i = v >> 6;
@@ -536,6 +557,7 @@ namespace BitsetsNET
                 answer.Bitmap[i] = aft;
                 answer.Cardinality += (int)((w - aft) >> 63);
             }
+
             return answer;
         }
 
@@ -548,23 +570,24 @@ namespace BitsetsNET
         {
             int index = x / 64;
             long bef = Bitmap[index];
-            long mask = (1L << x);
+            long mask = 1L << x;
 
             if (Cardinality == ArrayContainer.DEFAULT_MAX_SIZE + 1)
-            {// this is
-             // the
-             // uncommon
-             // path
+            {
+                // this is
+                // the
+                // uncommon
+                // path
                 if ((bef & mask) != 0)
                 {
                     --Cardinality;
-                    Bitmap[x / 64] = bef & (~mask);
-                    return this.ToArrayContainer();
+                    Bitmap[x / 64] = bef & ~mask;
+                    return ToArrayContainer();
                 }
             }
 
-            long aft = bef & (~mask);
-            Cardinality -= (aft - bef) != 0 ? 1 : 0;
+            long aft = bef & ~mask;
+            Cardinality -= aft - bef != 0 ? 1 : 0;
             Bitmap[index] = aft;
             return this;
         }
@@ -603,22 +626,26 @@ namespace BitsetsNET
                 {
                     return (ushort)(k * 64 + Utility.Select(Bitmap[k], leftover));
                 }
+
                 leftover -= w;
             }
+
             throw new ArgumentOutOfRangeException("Insufficient cardinality.");
         }
 
-        public override bool Equals(Object o)
+        public override bool Equals(object o)
         {
             if (o is BitsetContainer)
             {
                 BitsetContainer srb = (BitsetContainer)o;
-                if (srb.Cardinality != this.Cardinality)
+                if (srb.Cardinality != Cardinality)
                 {
                     return false;
                 }
-                return Array.Equals(this.Bitmap, srb.Bitmap);
-            } 
+
+                return Equals(Bitmap, srb.Bitmap);
+            }
+
             return false;
         }
 
@@ -629,8 +656,9 @@ namespace BitsetsNET
                 int hash = Cardinality;
                 for (int i = 0; i < Bitmap.Length; i++)
                 {
-                    hash = 17 * hash + (int) Bitmap[i];
+                    hash = 17 * hash + (int)Bitmap[i];
                 }
+
                 return hash;
             }
         }
@@ -645,7 +673,7 @@ namespace BitsetsNET
         public override void Serialize(BinaryWriter writer)
         {
             writer.Write(Cardinality);
-            foreach(long value in Bitmap)
+            foreach (long value in Bitmap)
             {
                 writer.Write(value);
             }
@@ -662,7 +690,7 @@ namespace BitsetsNET
             BitsetContainer container = new BitsetContainer();
 
             container.Cardinality = cardinality;
-            for(int i = 0; i < container.Bitmap.Length; i++)
+            for (int i = 0; i < container.Bitmap.Length; i++)
             {
                 container.Bitmap[i] = reader.ReadInt64();
             }
@@ -673,7 +701,7 @@ namespace BitsetsNET
         public override IEnumerator<ushort> GetEnumerator()
         {
             ushort index = 0;
-            foreach(long value in Bitmap)
+            foreach (long value in Bitmap)
             {
                 if (value != 0)
                 {
@@ -685,6 +713,7 @@ namespace BitsetsNET
                         {
                             yield return index;
                         }
+
                         val >>= 1;
                         index++;
                     }

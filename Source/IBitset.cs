@@ -1,11 +1,13 @@
 ﻿using System.Collections;
+using System.IO;
+using System.Runtime.Serialization;
 
 namespace BitsetsNET
 {
     /// <summary>
     /// This is the common interface for all bitsets regardless of compression. It defines common operations. 
     /// </summary>
-    public interface IBitset : IEnumerable, System.Runtime.Serialization.ISerializable
+    public interface IBitset : IEnumerable, ISerializable
     {
         /// <summary>
         /// Creates a new bitset that is the bitwise AND of this bitset with another bitset
@@ -92,7 +94,6 @@ namespace BitsetsNET
         /// <returns>an integer for the number of members in the set</returns>
         int Cardinality();
 
-        void Serialize(System.IO.Stream stream);
-
+        void Serialize(Stream stream);
     }
 }

@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BitsetsNET
 {
@@ -15,24 +12,24 @@ namespace BitsetsNET
         public int Cardinality;
         public ushort[] Content;
 
-        public ArrayContainer() : this(DEFAULT_INIT_SIZE) {}
-        
+        public ArrayContainer() : this(DEFAULT_INIT_SIZE) { }
+
         public ArrayContainer(int capacity)
         {
-            this.Cardinality = 0;
-            this.Content = new ushort[capacity];
+            Cardinality = 0;
+            Content = new ushort[capacity];
         }
 
         private ArrayContainer(int cardinality, ushort[] inpContent)
         {
-            this.Cardinality = cardinality;
-            this.Content = inpContent;
+            Cardinality = cardinality;
+            Content = inpContent;
         }
 
         public ArrayContainer(ushort[] newContent)
         {
-            this.Cardinality = newContent.Length;
-            this.Content = newContent;
+            Cardinality = newContent.Length;
+            Content = newContent;
         }
 
         /// <summary>
@@ -57,11 +54,12 @@ namespace BitsetsNET
                 // when cardinality = DEFAULT_MAX_SIZE
                 if (Cardinality >= DEFAULT_MAX_SIZE)
                 {
-                    BitsetContainer a = this.ToBitsetContainer();
+                    BitsetContainer a = ToBitsetContainer();
                     a.Add(x);
                     return a;
                 }
-                if (Cardinality >= this.Content.Length)
+
+                if (Cardinality >= Content.Length)
                 {
                     IncreaseCapacity();
                 }
@@ -72,6 +70,7 @@ namespace BitsetsNET
                 Content[-loc - 1] = x;
                 ++Cardinality;
             }
+
             return this;
         }
 
@@ -87,6 +86,7 @@ namespace BitsetsNET
             {
                 indexstart = -indexstart - 1;
             }
+
             int indexend = Utility.UnsignedBinarySearch(Content, 0, Cardinality, (ushort)(rangeEnd - 1));
 
             if (indexend < 0)
@@ -103,23 +103,23 @@ namespace BitsetsNET
 
             if (newcardinality > DEFAULT_MAX_SIZE)
             {
-                BitsetContainer a = this.ToBitsetContainer();
+                BitsetContainer a = ToBitsetContainer();
                 return a.Add(rangeStart, rangeEnd);
             }
 
-            if (newcardinality >= this.Content.Length)
+            if (newcardinality >= Content.Length)
             {
                 IncreaseCapacity(newcardinality);
             }
 
-            Array.Copy(Content, indexend, this.Content, indexstart + rangelength, Cardinality - indexend);
+            Array.Copy(Content, indexend, Content, indexstart + rangelength, Cardinality - indexend);
 
             for (int k = 0; k < rangelength; ++k)
             {
-                this.Content[k + indexstart] = (ushort)(rangeStart + k);
+                Content[k + indexstart] = (ushort)(rangeStart + k);
             }
 
-            this.Cardinality = newcardinality;
+            Cardinality = newcardinality;
 
             return this;
         }
@@ -132,15 +132,11 @@ namespace BitsetsNET
         /// <returns>A new container with the differences</returns>
         public override Container AndNot(ArrayContainer x)
         {
-            int desiredCapacity = this.GetCardinality();
-            var answer = new ArrayContainer(desiredCapacity);
+            int desiredCapacity = GetCardinality();
+            ArrayContainer answer = new ArrayContainer(desiredCapacity);
 
             // Compute the cardinality of the new container
-            answer.Cardinality = Utility.UnsignedDifference(this.Content,
-                                                            desiredCapacity,
-                                                            x.Content,
-                                                            x.GetCardinality(),
-                                                            answer.Content);
+            answer.Cardinality = Utility.UnsignedDifference(Content, desiredCapacity, x.Content, x.GetCardinality(), answer.Content);
             return answer;
         }
 
@@ -152,16 +148,17 @@ namespace BitsetsNET
         /// <returns>A new container with the differences</returns>
         public override Container AndNot(BitsetContainer x)
         {
-            var answer = new ArrayContainer(Content.Length);
+            ArrayContainer answer = new ArrayContainer(Content.Length);
             int pos = 0;
             for (int k = 0; k < Cardinality; ++k)
             {
-                ushort val = this.Content[k];
+                ushort val = Content[k];
                 if (!x.Contains(val))
                 {
                     answer.Content[pos++] = val;
                 }
             }
+
             answer.Cardinality = pos;
             return answer;
         }
@@ -180,14 +177,16 @@ namespace BitsetsNET
                 // when cardinality = DEFAULT_MAX_SIZE
                 if (Cardinality >= DEFAULT_MAX_SIZE)
                 {
-                    BitsetContainer a = this.ToBitsetContainer();
+                    BitsetContainer a = ToBitsetContainer();
                     a.Add(x);
                     return a;
                 }
-                if (Cardinality >= this.Content.Length)
+
+                if (Cardinality >= Content.Length)
                 {
                     IncreaseCapacity();
                 }
+
                 // insertion : shift the elements > x by one position to
                 // the right
                 // and put x in it's appropriate place
@@ -200,6 +199,7 @@ namespace BitsetsNET
                 Array.Copy(Content, loc + 1, Content, loc, Cardinality - loc - 1);
                 --Cardinality;
             }
+
             return this;
         }
 
@@ -216,6 +216,7 @@ namespace BitsetsNET
             {
                 return this;
             }
+
             if (begin > end)
             {
                 throw new ArgumentException("Invalid range [" + begin + "," + end + ")");
@@ -241,20 +242,21 @@ namespace BitsetsNET
             int newCardinality = indexStart + (Cardinality - indexEnd) + rangeLength;
             if (newCardinality > DEFAULT_MAX_SIZE)
             {
-                BitsetContainer a = this.ToBitsetContainer();
+                BitsetContainer a = ToBitsetContainer();
                 return a.IAdd(begin, end);
             }
 
-            if (newCardinality >= this.Content.Length)
+            if (newCardinality >= Content.Length)
             {
                 IncreaseCapacity(newCardinality);
             }
 
-            Array.Copy(this.Content, indexEnd, this.Content, indexStart + rangeLength, Cardinality - indexEnd);
+            Array.Copy(Content, indexEnd, Content, indexStart + rangeLength, Cardinality - indexEnd);
             for (int k = 0; k < rangeLength; ++k)
             {
                 Content[k + indexStart] = (ushort)(begin + k);
             }
+
             Cardinality = newCardinality;
             return this;
         }
@@ -270,13 +272,14 @@ namespace BitsetsNET
             int pos = 0;
             for (int k = 0; k < Cardinality; ++k)
             {
-                ushort v = this.Content[k];
+                ushort v = Content[k];
                 if (!x.Contains(v))
                 {
-                    this.Content[pos++] = v;
+                    Content[pos++] = v;
                 }
             }
-            this.Cardinality = pos;
+
+            Cardinality = pos;
             return this;
         }
 
@@ -288,11 +291,7 @@ namespace BitsetsNET
         /// <returns>The modified container</returns>
         public override Container IAndNot(ArrayContainer x)
         {
-            this.Cardinality = Utility.UnsignedDifference(this.Content, 
-                                                          this.GetCardinality(), 
-                                                          x.Content, 
-                                                          x.GetCardinality(), 
-                                                          this.Content);
+            Cardinality = Utility.UnsignedDifference(Content, GetCardinality(), x.Content, x.GetCardinality(), Content);
             return this;
         }
 
@@ -318,6 +317,7 @@ namespace BitsetsNET
             {
                 lastIndex = -lastIndex - 1 - 1;
             }
+
             int currentValuesInRange = lastIndex - startIndex + 1;
             int spanToBeFlipped = lastOfRange - firstOfRange;
             int newValuesInRange = spanToBeFlipped - currentValuesInRange;
@@ -326,7 +326,8 @@ namespace BitsetsNET
             int newCardinality = Cardinality + cardinalityChange;
 
             if (cardinalityChange > 0)
-            { // expansion, right shifting needed
+            {
+                // expansion, right shifting needed
                 if (newCardinality > Content.Length)
                 {
                     // so big we need a bitmap?
@@ -334,28 +335,27 @@ namespace BitsetsNET
                     {
                         return ToBitsetContainer().INot(firstOfRange, lastOfRange);
                     }
+
                     // Change the size of the array based on the new cardinality
                     Array.Resize(ref Content, newCardinality);
                 }
+
                 // slide right the contents after the range
-                Array.Copy(Content, 
-                           lastIndex + 1, Content, 
-                           lastIndex + 1 + cardinalityChange,
-                           Cardinality - 1 - lastIndex);
+                Array.Copy(Content, lastIndex + 1, Content, lastIndex + 1 + cardinalityChange, Cardinality - 1 - lastIndex);
                 NegateRange(buffer, startIndex, lastIndex, firstOfRange, lastOfRange);
             }
             else
-            { // no expansion needed
+            {
+                // no expansion needed
                 NegateRange(buffer, startIndex, lastIndex, firstOfRange, lastOfRange);
                 if (cardinalityChange < 0)
                 {
                     // contraction, left sliding.
                     // Leave array oversize
-                    Array.Copy(Content, startIndex + newValuesInRange - cardinalityChange, 
-                               Content, startIndex + newValuesInRange, 
-                               newCardinality - (startIndex + newValuesInRange));
+                    Array.Copy(Content, startIndex + newValuesInRange - cardinalityChange, Content, startIndex + newValuesInRange, newCardinality - (startIndex + newValuesInRange));
                 }
             }
+
             Cardinality = newCardinality;
             return this;
         }
@@ -367,8 +367,9 @@ namespace BitsetsNET
 
             int outPos = 0;
             int inPos = startIndex; // value here always >= valInRange,
-                                    // until it is exhausted
-                                    // n.b., we can start initially exhausted.
+
+            // until it is exhausted
+            // n.b., we can start initially exhausted.
 
             int valInRange = startRange;
             for (; valInRange < lastRange && inPos <= lastIndex; ++valInRange)
@@ -392,9 +393,9 @@ namespace BitsetsNET
 
             if (outPos != buffer.Length)
             {
-                throw new SystemException("negateRange: outPos " + outPos + 
-                                          " whereas buffer.length=" + buffer.Length);
+                throw new SystemException("negateRange: outPos " + outPos + " whereas buffer.length=" + buffer.Length);
             }
+
             // copy back from buffer...caller must ensure there is room
             int i = startIndex;
             foreach (ushort item in buffer)
@@ -406,17 +407,17 @@ namespace BitsetsNET
         private void IncreaseCapacity(int min)
         {
             int newCapacity;
-            if(this.Content.Length == 0)
+            if (Content.Length == 0)
             {
                 newCapacity = DEFAULT_INIT_SIZE;
             }
-            else if(this.Content.Length < 64)
+            else if (Content.Length < 64)
             {
-                newCapacity = this.Content.Length * 2;
+                newCapacity = Content.Length * 2;
             }
-            else if(this.Content.Length < 1024)
+            else if (Content.Length < 1024)
             {
-                newCapacity = this.Content.Length * 3 / 2;
+                newCapacity = Content.Length * 3 / 2;
             }
             else
             {
@@ -427,25 +428,29 @@ namespace BitsetsNET
             {
                 newCapacity = min;
             }
+
             // never allocate more than we will ever need
-            if (newCapacity > ArrayContainer.DEFAULT_MAX_SIZE)
+            if (newCapacity > DEFAULT_MAX_SIZE)
             {
-                newCapacity = ArrayContainer.DEFAULT_MAX_SIZE;
+                newCapacity = DEFAULT_MAX_SIZE;
             }
+
             // if we are within 1/16th of the max, go to max 
-            if (newCapacity < ArrayContainer.DEFAULT_MAX_SIZE - ArrayContainer.DEFAULT_MAX_SIZE / 16)
+            if (newCapacity < DEFAULT_MAX_SIZE - DEFAULT_MAX_SIZE / 16)
             {
-                newCapacity = ArrayContainer.DEFAULT_MAX_SIZE;
+                newCapacity = DEFAULT_MAX_SIZE;
             }
-            Array.Resize(ref this.Content, newCapacity);
+
+            Array.Resize(ref Content, newCapacity);
         }
 
         //TODO: This needs to be optimized. It should increase capacity by more than just 1 each time
         public void IncreaseCapacity()
         {
-            int currCapacity = this.Content.Length;
+            int currCapacity = Content.Length;
+
             //TODO: Tori says this may be jank
-            Array.Resize(ref this.Content, currCapacity + 1);
+            Array.Resize(ref Content, currCapacity + 1);
         }
 
         public BitsetContainer ToBitsetContainer()
@@ -457,7 +462,7 @@ namespace BitsetsNET
 
         public void LoadData(BitsetContainer bitsetContainer)
         {
-            this.Cardinality = bitsetContainer.Cardinality;
+            Cardinality = bitsetContainer.Cardinality;
             bitsetContainer.FillArray(Content);
         }
 
@@ -485,11 +490,7 @@ namespace BitsetsNET
             ArrayContainer value1 = this;
             int desiredCapacity = Math.Min(value1.GetCardinality(), value2.GetCardinality());
             ArrayContainer answer = new ArrayContainer(desiredCapacity);
-            answer.Cardinality = Utility.UnsignedIntersect2by2(value1.Content,
-                                                               value1.GetCardinality(), 
-                                                               value2.Content,
-                                                               value2.GetCardinality(), 
-                                                               answer.Content);
+            answer.Cardinality = Utility.UnsignedIntersect2by2(value1.Content, value1.GetCardinality(), value2.Content, value2.GetCardinality(), answer.Content);
             return answer;
         }
 
@@ -499,9 +500,9 @@ namespace BitsetsNET
         /// <returns>Cloned array container</returns>
         public override Container Clone()
         {
-            ushort[] newContent = new ushort[this.Content.Length];
-            this.Content.CopyTo(newContent, 0);
-            return new ArrayContainer(this.Cardinality, newContent);
+            ushort[] newContent = new ushort[Content.Length];
+            Content.CopyTo(newContent, 0);
+            return new ArrayContainer(Cardinality, newContent);
         }
 
         /// <summary>
@@ -555,6 +556,7 @@ namespace BitsetsNET
                     Content[pos++] = v;
                 }
             }
+
             Cardinality = pos;
             return this;
         }
@@ -568,11 +570,7 @@ namespace BitsetsNET
         /// <returns>Aggregated container</returns>
         public override Container IAnd(ArrayContainer other)
         {
-            Cardinality = Utility.UnsignedIntersect2by2(Content,
-                                                        GetCardinality(), 
-                                                        other.Content,
-                                                        other.GetCardinality(), 
-                                                        Content);
+            Cardinality = Utility.UnsignedIntersect2by2(Content, GetCardinality(), other.Content, other.GetCardinality(), Content);
             return this;
         }
 
@@ -617,7 +615,7 @@ namespace BitsetsNET
         /// <returns>Aggregated container</returns>
         public override Container IOr(ArrayContainer x)
         {
-            return this.Or(x);
+            return Or(x);
         }
 
         /// <summary>
@@ -628,7 +626,7 @@ namespace BitsetsNET
         /// <returns>Aggregated container</returns>
         public override Container Or(BitsetContainer x)
         {
-            return x.Or((ArrayContainer) this);
+            return x.Or(this);
         }
 
         /// <summary>
@@ -649,38 +647,37 @@ namespace BitsetsNET
                 {
                     ushort v = x.Content[k];
                     int i = v >> 6;
-                    bc.Bitmap[i] |= (1L << v);
+                    bc.Bitmap[i] |= 1L << v;
                 }
-                for (int k = 0; k < this.Cardinality; ++k)
+
+                for (int k = 0; k < Cardinality; ++k)
                 {
-                    ushort v = this.Content[k];
+                    ushort v = Content[k];
                     int i = v >> 6;
-                    bc.Bitmap[i] |= (1L << v);
+                    bc.Bitmap[i] |= 1L << v;
                 }
+
                 bc.Cardinality = 0;
                 foreach (long k in bc.Bitmap)
                 {
                     bc.Cardinality += Utility.LongBitCount(k);
                 }
+
                 if (bc.Cardinality <= DEFAULT_MAX_SIZE)
                 {
                     return bc.ToArrayContainer();
                 }
+
                 return bc;
             }
-            else
-            {
-                // remains an array container
-                int desiredCapacity = totalCardinality; // Math.min(BitmapContainer.MAX_CAPACITY,
-                                                        // totalCardinality);
-                ArrayContainer answer = new ArrayContainer(desiredCapacity);
-                answer.Cardinality = Utility.UnsignedUnion2by2(value1.Content,
-                                                               value1.GetCardinality(), 
-                                                               x.Content,
-                                                               x.GetCardinality(), 
-                                                               answer.Content);
-                return answer;
-            }
+
+            // remains an array container
+            int desiredCapacity = totalCardinality; // Math.min(BitmapContainer.MAX_CAPACITY,
+
+            // totalCardinality);
+            ArrayContainer answer = new ArrayContainer(desiredCapacity);
+            answer.Cardinality = Utility.UnsignedUnion2by2(value1.Content, value1.GetCardinality(), x.Content, x.GetCardinality(), answer.Content);
+            return answer;
         }
 
         /// <summary>
@@ -697,6 +694,7 @@ namespace BitsetsNET
                 Array.Copy(Content, loc + 1, Content, loc, Cardinality - loc - 1);
                 --Cardinality;
             }
+
             return this;
         }
 
@@ -739,28 +737,30 @@ namespace BitsetsNET
         /// <returns>The jth value of the container</returns>
         public override ushort Select(int j)
         {
-            return this.Content[j];
+            return Content[j];
         }
 
-        public override bool Equals(Object o)
+        public override bool Equals(object o)
         {
             if (!(o is ArrayContainer))
             {
                 return false;
             }
 
-            ArrayContainer srb = (ArrayContainer) o;
-            if (srb.Cardinality != this.Cardinality)
+            ArrayContainer srb = (ArrayContainer)o;
+            if (srb.Cardinality != Cardinality)
             {
                 return false;
             }
-            for (int i = 0; i < this.Cardinality; ++i)
+
+            for (int i = 0; i < Cardinality; ++i)
             {
-                if (this.Content[i] != srb.Content[i])
+                if (Content[i] != srb.Content[i])
                 {
                     return false;
                 }
             }
+
             return true;
         }
 
@@ -773,9 +773,9 @@ namespace BitsetsNET
                 {
                     hash = 17 * hash + Content[i];
                 }
+
                 return hash;
             }
-
         }
 
         /// <summary>
@@ -804,9 +804,9 @@ namespace BitsetsNET
             ArrayContainer container = new ArrayContainer(cardinality);
 
             container.Cardinality = cardinality;
-            for(int i = 0; i < cardinality; i++)
+            for (int i = 0; i < cardinality; i++)
             {
-                container.Content[i] = (ushort) reader.ReadInt16();
+                container.Content[i] = (ushort)reader.ReadInt16();
             }
 
             return container;

@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace BitsetsNET
 {
     public abstract class Container : IEnumerable<ushort>
     {
-        
         /// <summary>
         /// Add a short to the container. May generate a new container.
         /// </summary>
@@ -56,7 +52,8 @@ namespace BitsetsNET
             {
                 return And((ArrayContainer)x);
             }
-            return And((BitsetContainer) x);
+
+            return And((BitsetContainer)x);
         }
 
         /// <summary>
@@ -90,7 +87,8 @@ namespace BitsetsNET
             {
                 return AndNot((ArrayContainer)x);
             }
-            return AndNot((BitsetContainer) x);
+
+            return AndNot((BitsetContainer)x);
         }
 
         /// <summary>
@@ -119,6 +117,7 @@ namespace BitsetsNET
             {
                 return IAndNot((ArrayContainer)x);
             }
+
             return IAndNot((BitsetContainer)x);
         }
 
@@ -179,6 +178,7 @@ namespace BitsetsNET
             {
                 return IAnd((ArrayContainer)x);
             }
+
             return IAnd((BitsetContainer)x);
         }
 
@@ -202,6 +202,7 @@ namespace BitsetsNET
             {
                 return Intersects((ArrayContainer)x);
             }
+
             return Intersects((BitsetContainer)x);
         }
 
@@ -283,6 +284,7 @@ namespace BitsetsNET
             {
                 return IOr((ArrayContainer)x);
             }
+
             return IOr((BitsetContainer)x);
         }
 
@@ -314,9 +316,10 @@ namespace BitsetsNET
             {
                 return Or((ArrayContainer)x);
             }
+
             return Or((BitsetContainer)x);
         }
-        
+
         /// <summary>
         /// Remove specified short from this container. May create a new container.
         /// </summary>
@@ -343,7 +346,7 @@ namespace BitsetsNET
         /// Serialize this container in a binary format.
         /// </summary>
         /// <param name="writer">The binary writer to write the serialization to.</param>
-        public abstract void Serialize(System.IO.BinaryWriter writer);
+        public abstract void Serialize(BinaryWriter writer);
 
         /// <summary>
         /// Deserialize a container from a binary reader.
@@ -351,17 +354,15 @@ namespace BitsetsNET
         /// <param name="reader"></param>
         /// <returns>The next container represented by the reader.</returns>
         /// <remarks>The binary format for deserialization is the format written by the Serialize method.</remarks>
-        public static Container Deserialize(System.IO.BinaryReader reader)
+        public static Container Deserialize(BinaryReader reader)
         {
             int cardinality = reader.ReadInt32();
-            if(cardinality < ArrayContainer.DEFAULT_MAX_SIZE)
+            if (cardinality < ArrayContainer.DEFAULT_MAX_SIZE)
             {
                 return ArrayContainer.Deserialize(reader, cardinality);
             }
-            else
-            {
-                return BitsetContainer.Deserialize(reader, cardinality);
-            }
+
+            return BitsetContainer.Deserialize(reader, cardinality);
         }
 
         public abstract IEnumerator<ushort> GetEnumerator();

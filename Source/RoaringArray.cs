@@ -1,20 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using System.IO;
 
 namespace BitsetsNET
 {
-    class RoaringArray 
+    internal class RoaringArray
     {
         protected static short INITIAL_CAPACITY = 5;
 
-        private ushort[] keys = null;
-        private Container[] values = null;
-        private int size = 0;
+        private ushort[] keys;
+        private Container[] values;
 
         public RoaringArray() : this(INITIAL_CAPACITY) { }
 
@@ -24,24 +19,14 @@ namespace BitsetsNET
             values = new Container[capacity];
         }
 
-        public int Size
-        {
-            get
-            {
-                return size;
-            }
-            set
-            {
-                size = value;
-            }
-        }
+        public int Size { get; set; }
 
         public void Append(ushort key, Container value)
         {
             ExtendArray(1);
-            this.keys[this.Size] = key;
-            this.values[this.Size] = value;
-            this.Size++;
+            keys[Size] = key;
+            values[Size] = value;
+            Size++;
         }
 
         /// <summary>Append copy of the one value from another array</summary>
@@ -50,9 +35,9 @@ namespace BitsetsNET
         public void AppendCopy(RoaringArray sa, int index)
         {
             ExtendArray(1);
-            this.keys[this.Size] = sa.keys[index];
-            this.values[this.Size] = sa.values[index].Clone();
-            this.Size++;
+            keys[Size] = sa.keys[index];
+            values[Size] = sa.values[index].Clone();
+            Size++;
         }
 
         /// <summary>Append copies of the values from another array</summary>
@@ -64,9 +49,9 @@ namespace BitsetsNET
             ExtendArray(end - startingIndex);
             for (int i = startingIndex; i < end; ++i)
             {
-                this.keys[this.Size] = sa.keys[i];
-                this.values[this.Size] = sa.values[i].Clone();
-                this.Size++;
+                keys[Size] = sa.keys[i];
+                values[Size] = sa.values[i].Clone();
+                Size++;
             }
         }
 
@@ -81,13 +66,15 @@ namespace BitsetsNET
             }
 
             int spansize = 1; // could set larger
+
             // bootstrap an upper limit
 
             while (lower + spansize < Size && keys[lower + spansize] < x)
             {
                 spansize *= 2; // hoping for compiler will reduce to shift
             }
-            int upper = (lower + spansize < Size) ? lower + spansize : Size - 1;
+
+            int upper = lower + spansize < Size ? lower + spansize : Size - 1;
 
             // maybe we are lucky (could be common case when the seek ahead
             // expected to be small and sequential will otherwise make us look bad)
@@ -97,12 +84,13 @@ namespace BitsetsNET
             }
 
             if (keys[upper] < x)
-            {// means array has no item key >= x
+            {
+                // means array has no item key >= x
                 return Size;
             }
 
             // we know that the next-smallest span was too small
-            lower += (spansize / 2);
+            lower += spansize / 2;
 
             // else begin binary search
             // invariant: array[lower]<x && array[upper]>x
@@ -113,7 +101,8 @@ namespace BitsetsNET
                 {
                     return mid;
                 }
-                else if (keys[mid] < x)
+
+                if (keys[mid] < x)
                 {
                     lower = mid;
                 }
@@ -122,6 +111,7 @@ namespace BitsetsNET
                     upper = mid;
                 }
             }
+
             return upper;
         }
 
@@ -133,18 +123,18 @@ namespace BitsetsNET
         {
             RoaringArray sa = new RoaringArray();
 
-            sa.keys = new ushort[this.keys.Length];
-            this.keys.CopyTo(sa.keys, 0);
+            sa.keys = new ushort[keys.Length];
+            keys.CopyTo(sa.keys, 0);
 
-            sa.values = new Container[this.values.Length];
-            this.values.CopyTo(sa.values, 0);
+            sa.values = new Container[values.Length];
+            values.CopyTo(sa.values, 0);
 
-            for (int k = 0; k < this.Size; ++k)
+            for (int k = 0; k < Size; ++k)
             {
                 sa.values[k] = sa.values[k].Clone();
             }
 
-            sa.Size = this.Size;
+            sa.Size = Size;
 
             return sa;
         }
@@ -159,24 +149,25 @@ namespace BitsetsNET
         internal void CopyRange(int begin, int end, int newBegin)
         {
             int range = end - begin;
-            Array.Copy(this.keys, begin, this.keys, newBegin, range);
-            Array.Copy(this.values, begin, this.values, newBegin, range);
+            Array.Copy(keys, begin, keys, newBegin, range);
+            Array.Copy(values, begin, values, newBegin, range);
         }
 
         public ushort GetKeyAtIndex(int i)
         {
-            return this.keys[i];
+            return keys[i];
         }
 
         public int GetIndex(ushort x)
         {
             //TODO: optimize this
             //before the binary search we optimize for frequent cases
-            if ((Size == 0) || (keys[Size - 1] == x))
+            if (Size == 0 || keys[Size - 1] == x)
             {
                 return Size - 1;
             }
-            return this.BinarySearch(0, Size, x); 
+
+            return BinarySearch(0, Size, x);
         }
 
         private int BinarySearch(int begin, int end, ushort key)
@@ -222,6 +213,7 @@ namespace BitsetsNET
             {
                 return;
             }
+
             int range = end - begin;
 
             Array.Copy(keys, end, keys, begin, Size - end);
@@ -232,9 +224,10 @@ namespace BitsetsNET
                 keys[Size - i] = 0;
                 values[Size - i] = null;
             }
+
             Size -= range;
         }
-        
+
         /// <summary>
         /// insert a new key, it is assumed that it does not exist
         /// </summary>
@@ -267,43 +260,45 @@ namespace BitsetsNET
         public void ExtendArray(int k)
         {
             // size + 1 could overflow
-            if (this.Size + k >= this.keys.Length)
+            if (Size + k >= keys.Length)
             {
                 int newCapacity;
-                if (this.keys.Length < 1024)
+                if (keys.Length < 1024)
                 {
-                    newCapacity = 2 * (this.Size + k);
+                    newCapacity = 2 * (Size + k);
                 }
                 else
                 {
-                    newCapacity = 5 * (this.Size + k) / 4;
+                    newCapacity = 5 * (Size + k) / 4;
                 }
+
                 //TODO: this may be jank
-                Array.Resize(ref this.keys, newCapacity);
-                Array.Resize(ref this.values, newCapacity);
+                Array.Resize(ref keys, newCapacity);
+                Array.Resize(ref values, newCapacity);
             }
         }
 
-        public override bool Equals(Object o)
+        public override bool Equals(object o)
         {
             if (!(o is RoaringArray))
             {
                 return false;
             }
 
-            RoaringArray srb = (RoaringArray) o;
-            if (srb.Size != this.Size)
+            RoaringArray srb = (RoaringArray)o;
+            if (srb.Size != Size)
             {
                 return false;
             }
 
             for (int i = 0; i < srb.Size; ++i)
             {
-                if (this.keys[i] != srb.keys[i] || !this.values[i].Equals(srb.values[i]))
+                if (keys[i] != srb.keys[i] || !values[i].Equals(srb.values[i]))
                 {
                     return false;
                 }
             }
+
             return true;
         }
 
@@ -316,6 +311,7 @@ namespace BitsetsNET
                 {
                     hash = unchecked(17 * hash + keys[i] * 0xF0F0F0 + values[i].GetHashCode());
                 }
+
                 return hash;
             }
         }
@@ -328,7 +324,7 @@ namespace BitsetsNET
         {
             writer.Write(Size);
 
-            for(int i = 0; i < Size; i++)
+            for (int i = 0; i < Size; i++)
             {
                 writer.Write(keys[i]);
                 values[i].Serialize(writer);
@@ -346,10 +342,10 @@ namespace BitsetsNET
             RoaringArray array = new RoaringArray(size);
             array.Size = size;
 
-            for(int i = 0; i < size; i++)
+            for (int i = 0; i < size; i++)
             {
-                array.keys[i] = (ushort) reader.ReadInt16();
-                array.values[i] = Container.Deserialize(reader); 
+                array.keys[i] = (ushort)reader.ReadInt16();
+                array.values[i] = Container.Deserialize(reader);
             }
 
             return array;
@@ -362,10 +358,10 @@ namespace BitsetsNET
         /// bit is '1' or true) indices for this bitset.</returns>
         public IEnumerator<int> GetEnumerator()
         {
-            for(int i = 0; i < Size; i++)
+            for (int i = 0; i < Size; i++)
             {
                 int highbits = keys[i] << 16;
-                foreach(ushort lowbits in values[i])
+                foreach (ushort lowbits in values[i])
                 {
                     yield return highbits + lowbits;
                 }

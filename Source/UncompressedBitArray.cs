@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 
@@ -8,7 +9,7 @@ namespace BitsetsNET
     public class UncompressedBitArray : IBitset
     {
         private BitArray array;
-        
+
         public UncompressedBitArray() { }
 
         public UncompressedBitArray(UncompressedBitArray copy)
@@ -28,13 +29,7 @@ namespace BitsetsNET
             }
         }
 
-        public int Length
-        {
-            get
-            {
-                return array.Length;
-            }
-        }
+        public int Length => array.Length;
 
         /// <summary>
         /// Creates a new bitset that is the bitwise AND of this bitset with another
@@ -43,7 +38,7 @@ namespace BitsetsNET
         /// <returns>A new IBitset</returns>
         public IBitset And(IBitset otherSet)
         {
-            IBitset result = this.Clone();
+            IBitset result = Clone();
             result.AndWith(otherSet);
             return result;
         }
@@ -83,7 +78,7 @@ namespace BitsetsNET
         /// <returns>A new IBitset</returns>
         public IBitset Or(IBitset otherSet)
         {
-            IBitset result = this.Clone();
+            IBitset result = Clone();
             result.OrWith(otherSet);
             return result;
         }
@@ -124,10 +119,10 @@ namespace BitsetsNET
 
         public IEnumerator GetEnumerator()
         {
-            for (int i = 0; i < this.array.Length; i++)
+            for (int i = 0; i < array.Length; i++)
             {
-                if (this.array.Get(i) == true)
-                { 
+                if (array.Get(i))
+                {
                     yield return i;
                 }
             }
@@ -140,7 +135,7 @@ namespace BitsetsNET
         /// <returns>The new bitset</returns>
         public IBitset Not()
         {
-            var newSet = new UncompressedBitArray();
+            UncompressedBitArray newSet = new UncompressedBitArray();
             newSet.array = array.Not();
 
             return newSet;
@@ -156,7 +151,8 @@ namespace BitsetsNET
 
             for (int i = 0; i < array.Length; i++)
             {
-                if (array[i]) rtnValue += 1;
+                if (array[i])
+                    rtnValue += 1;
             }
 
             return rtnValue;
@@ -170,7 +166,7 @@ namespace BitsetsNET
         /// <param name="end">the index to stop at (exclusive)</param>
         public void Set(int start, int end, bool value)
         {
-            for (int i = start; i <= end; i++ )
+            for (int i = start; i <= end; i++)
             {
                 array.Set(i, value);
             }
@@ -217,24 +213,25 @@ namespace BitsetsNET
                 throw new InvalidOperationException("otherSet is not an UncompressedBitArray");
             }
 
-            UncompressedBitArray newArray = (UncompressedBitArray) this.Clone();
+            UncompressedBitArray newArray = (UncompressedBitArray)Clone();
 
             for (int i = 0; i < workset.array.Length; i++)
             {
-                if (workset.array[i] && i < this.Length)
+                if (workset.array[i] && i < Length)
                 {
                     newArray.Set(i, false);
                 }
             }
+
             return newArray;
         }
 
         public BitArray ToBitArray()
         {
-            return new BitArray(this.array);
+            return new BitArray(array);
         }
 
-        public void Serialize(System.IO.Stream stream)
+        public void Serialize(Stream stream)
         {
             throw new NotImplementedException();
         }
@@ -247,18 +244,18 @@ namespace BitsetsNET
             }
 
             UncompressedBitArray compare = (UncompressedBitArray)obj;
-            bool equalLength = (this.Length == compare.Length);
+            bool equalLength = Length == compare.Length;
             if (equalLength)
             {
-                for (int i = 0; i < this.Length; i++)
+                for (int i = 0; i < Length; i++)
                 {
-                    if (this.array.Get(i) != compare.array.Get(i))
+                    if (array.Get(i) != compare.array.Get(i))
                     {
                         equalLength = false;
                     }
-
                 }
             }
+
             return equalLength;
         }
 
@@ -270,8 +267,8 @@ namespace BitsetsNET
                 for (int i = 0; i < Length; i++)
                 {
                     hash = 17 * hash + array.Get(i).GetHashCode();
-
                 }
+
                 return hash;
             }
         }
