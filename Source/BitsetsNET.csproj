@@ -1,7 +1,16 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>0.5.0</Version>
+    <PackageProjectUrl>https://github.com/Genbox/BitSetsNet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Genbox/BitSetsNet</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
+    <PackageLicenseUrl>https://github.com/Genbox/BitSetsNet/blob/master/LICENSE</PackageLicenseUrl>
+    <Authors>Ian Qvist</Authors>
+    <Product>Genbox.BitsetsNET</Product>
+    <PackageId>Genbox.BitsetsNET</PackageId>
+    <Description>The same package as the normal BitsetsNET but ported to .NET Core 2.0</Description>
   </PropertyGroup>
 
 </Project>
